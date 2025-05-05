@@ -212,7 +212,7 @@ def process_video(video_path, yolo_model_path=None, depth_model_path=None, focal
     label_annotator = sv.LabelAnnotator(
         text_position=sv.Position.TOP_LEFT, 
         text_padding=3,
-        text_scale=3.0,  # Increase text scale (default is usually 0.5)
+        text_scale=1.0,  # Increase text scale (default is usually 0.5)
         text_thickness=2  # Increase text thickness for better visibility
     )
     
@@ -314,8 +314,8 @@ def process_video(video_path, yolo_model_path=None, depth_model_path=None, focal
                         
                         # Add measurement information for regular divots
                         if i in divot_volumes and i in divot_areas and divot_volumes[i] is not None:
-                            label += f"\nVol: {divot_volumes[i]:.2f} mm³"
-                            label += f"\nArea: {divot_areas[i]:.2f} mm²"
+                            label += f"\nVol: {divot_volumes[i]:.2f} mm3"
+                            label += f"\nArea: {divot_areas[i]:.2f} mm2"
                         
                         labels.append(label)
                     
