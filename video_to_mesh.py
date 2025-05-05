@@ -360,7 +360,7 @@ def main():
     parser = argparse.ArgumentParser(description='Process a video to detect divots and calculate measurements')
     parser.add_argument('--video', default='videos/1.mp4', 
                         help='Path to the input video file (default: videos/1.mp4)')
-    parser.add_argument('--model', default=r"C:\Users\teomeo\Desktop\aMU_MSc\desertation\Yolo11seg\yolo11n_1600_40ep\1600n-aug-40ep.pt", 
+    parser.add_argument('--model', default='yolo11n_1600_40ep/1600n-aug-40ep.pt',
                         help='Path to the YOLO model')
     parser.add_argument('--depth-model', default='checkpoints/depth_anything_v2_vits.pth',
                         help='Path to the Depth Anything V2 model file')
