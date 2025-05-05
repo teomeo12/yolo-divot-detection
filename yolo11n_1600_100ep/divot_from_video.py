@@ -4,7 +4,7 @@ import supervision as sv
 import os
 from ultralytics import YOLO
 
-def process_video(video_path, model_path, resize_factor=0.5, process_every_n_frames=2):
+def process_video(video_path, model_path, output_path, resize_factor=0.5, process_every_n_frames=2):
     # Initialize YOLO model
     model = YOLO(model_path)
     
@@ -32,8 +32,10 @@ def process_video(video_path, model_path, resize_factor=0.5, process_every_n_fra
     print(f"Resizing video from {original_width}x{original_height} to {new_width}x{new_height}")
     print(f"Processing every {process_every_n_frames} frames")
     
+    # Ensure output directory exists
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    
     # Create output video with the resized dimensions
-    output_path = os.path.splitext(video_path)[0] + "_processed.mp4"
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     out = cv2.VideoWriter(output_path, fourcc, fps/process_every_n_frames, (new_width, new_height))
     
@@ -103,31 +105,48 @@ def process_video(video_path, model_path, resize_factor=0.5, process_every_n_fra
         print(f"Processed video saved to: {output_path}")
 
 def main():
-    # Path to YOLO model
-    model_path = r"C:\Users\teomeo\Desktop\aMU_MSc\desertation\Yolo11seg\yolo11n_1600_40ep\1600n-aug-40ep.pt"
-    #model_path = r"C:\Users\teomeo\Desktop\aMU_MSc\desertation\Yolo11seg\yolo11n_1600_40ep\1600n-aug-40ep.onnx"
+    # Base workspace directory
+    workspace_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     
-    # Folder containing videos
-    video_folder = r"C:\Users\teomeo\Desktop\aMU_MSc\desertation\GolfDivotsImages\VideoGolf"
+    # Dictionary mapping project folders to their model files
+    project_models = {
+        
+        'yolo11n_1600_100ep': 'yolo11n_1600_100ep.pt',
+        
+        # 'yolo11s_1600_100ep': 'model_name.pt'  # Uncomment and add correct model name when available
+    }
     
-    # List all video files in the folder
-    video_files = [f for f in os.listdir(video_folder) if f.endswith(('.mp4', '.avi', '.mov'))]
+    # Videos directory
+    videos_dir = os.path.join(workspace_dir, 'videos')
     
-    if not video_files:
-        print(f"No video files found in {video_folder}")
-        return
-    
-    # Print available videos
-    print("Available videos:")
-    for i, video in enumerate(video_files):
-        print(f"{i+1}. {video}")
-    
-    # Process the first video automatically
-    video_path = os.path.join(video_folder, video_files[0])
-    print(f"Processing video: {video_files[0]}")
-    
-    # Process with reduced size (50%) and only every 2nd frame
-    process_video(video_path, model_path, resize_factor=0.5, process_every_n_frames=2)
+    # Process videos with each available model
+    for project_folder, model_file in project_models.items():
+        print(f"\nProcessing with model from {project_folder}")
+        
+        # Create processed_videos subfolder
+        processed_dir = os.path.join(workspace_dir, project_folder, 'processed_videos')
+        os.makedirs(processed_dir, exist_ok=True)
+        
+        # Get model path
+        model_path = os.path.join(workspace_dir, project_folder, model_file)
+        
+        # Check if model exists
+        if not os.path.exists(model_path):
+            print(f"Warning: Model file not found at {model_path}")
+            continue
+            
+        # Process each video
+        for video_file in sorted(os.listdir(videos_dir)):
+            if video_file.endswith(('.mp4', '.avi', '.mov')):
+                print(f"\nProcessing video: {video_file}")
+                
+                video_path = os.path.join(videos_dir, video_file)
+                output_path = os.path.join(processed_dir, f"{os.path.splitext(video_file)[0]}_processed.mp4")
+                
+                try:
+                    process_video(video_path, model_path, output_path, resize_factor=0.5, process_every_n_frames=2)
+                except Exception as e:
+                    print(f"Error processing {video_file}: {str(e)}")
 
 if __name__ == "__main__":
     main() 
