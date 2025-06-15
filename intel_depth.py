@@ -11,7 +11,7 @@ from depth_anything_v2.dpt import DepthAnythingV2
 
 # Device selection for PyTorch
 DEVICE = 'cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu'
-
+q
 def initialize_depth_model(model_path='checkpoints/depth_anything_v2_vits.pth'):
     """Initialize the Depth Anything V2 model"""
     print(f"Loading depth model from: {model_path}")

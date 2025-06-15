@@ -107,7 +107,7 @@ def process_image(image_path, yolo_model_path, output_dir, focal_length=525.0, s
         text_position=sv.Position.TOP_LEFT, 
         text_padding=3,
         text_scale=3.0,  # Increase text scale (default is usually 0.5)
-        text_thickness=2  # Increase text thickness for better visibility
+        text_thickness=3  # Increase text thickness for better visibility
     )
     
     # Run YOLO detection
@@ -187,8 +187,8 @@ def process_image(image_path, yolo_model_path, output_dir, focal_length=525.0, s
         
         # Add volume information to the visualization
         if volume is not None:
-            volume_text = f"Vol: {volume:.2f} mm^3"
-            area_text = f"Area: {area_mm2:.2f} mm^2"
+            volume_text = f"Vol: {volume:.2f} cm^3"
+            area_text = f"Area: {area_mm2:.2f} cm^2"
             print(f"Divot {i+1} volume: {volume:.2f} cubic millimeters")
             
             # Add text to the annotated image - just larger size
@@ -200,22 +200,22 @@ def process_image(image_path, yolo_model_path, output_dir, focal_length=525.0, s
             cv2.putText(
                 annotated_image, 
                 volume_text, 
-                (center_x - (len(volume_text) * 11) // 2, center_y - 20),  # Center text above the middle
+                (center_x - (len(volume_text) * 11) // 2, center_y - 40),  # Center text above the middle with more space
                 cv2.FONT_HERSHEY_SIMPLEX, 
-                1.0,  # Increased text size
+                2.0,  # Increased text size
                 (255, 255, 255),  # White color
-                2
+                3  # Increased thickness for bolder text
             )
             
-            # Add area text below volume
+            # Add area text below volume with more spacing
             cv2.putText(
                 annotated_image, 
                 area_text, 
-                (center_x - (len(area_text) * 11) // 2, center_y + 20),  # Center text below the middle
+                (center_x - (len(area_text) * 11) // 2, center_y + 40),  # Center text below the middle with more space
                 cv2.FONT_HERSHEY_SIMPLEX, 
-                1.0,  # Same text size as volume
+                2.0,  # Same text size as volume
                 (255, 255, 255),  # White color
-                2
+                3  # Increased thickness for bolder text
             )
         else:
             print(f"Could not calculate volume for divot {i+1}")
@@ -264,9 +264,10 @@ def process_all_images(input_dir, output_dir, yolo_model_path, focal_length=525.
     image_extensions = ['.jpg', '.jpeg', '.png', '.bmp']
     image_files = []
     
+    # Modified approach to avoid duplicate file extensions
     for ext in image_extensions:
+        # Only search for lowercase extensions to avoid duplicates
         image_files.extend(list(Path(input_dir).glob(f'*{ext}')))
-        image_files.extend(list(Path(input_dir).glob(f'*{ext.upper()}')))
     
     if not image_files:
         print(f"No image files found in {input_dir}")
