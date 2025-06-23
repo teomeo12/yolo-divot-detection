@@ -12,8 +12,8 @@ import numpy as np
 LOWER_BLACK_COLOR = np.array([0, 0, 0])
 UPPER_BLACK_COLOR = np.array([180, 255, 60]) # The last value (Value) is key for darkness
 
-# Add a range for brown (e.g., for sand or lighter soil)
-LOWER_BROWN_COLOR = np.array([10, 100, 20])
+# Add a range for brown, converted from your RGB values
+LOWER_BROWN_COLOR = np.array([10, 40, 20])
 UPPER_BROWN_COLOR = np.array([25, 255, 200])
 
 # Morphological Kernel size for cleaning up the mask
