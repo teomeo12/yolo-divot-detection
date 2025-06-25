@@ -53,7 +53,7 @@ try:
         color_image = np.asanyarray(color_frame.get_data())
 
         # Draw a circle at the center pixel
-        cv2.circle(color_image, (center_x, center_y), 5, (0, 0, 255), -1)
+        cv2.circle(color_image, (center_x, center_y), 3, (0, 0, 255), -1)
 
         # Display the distance on the image
         cv2.putText(color_image, f"Distance: {distance_in_mm:.3f} mm", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
