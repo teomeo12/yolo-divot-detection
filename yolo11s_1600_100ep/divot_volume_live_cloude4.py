@@ -177,50 +177,77 @@ def main():
             # Convert results to supervision Detections
             detections = sv.Detections.from_ultralytics(results[0])
             
-            # Process each detected divot
+            # Get class names from the model
+            class_names = results[0].names
+            
+            # Process detections - volume calculation only for 'divot' class
             if len(detections) > 0:
-                # Get the first (and presumably largest/most confident) detection
-                detection_idx = 0
-                if detections.mask is not None and len(detections.mask) > detection_idx:
-                    # Convert YOLO mask to contour
-                    divot_contour, mask_clean = convert_yolo_mask_to_contour(detections.mask[detection_idx])
+                # Find divot detections (class_id for 'divot')
+                divot_class_id = None
+                for class_id, class_name in class_names.items():
+                    if class_name == 'divot':
+                        divot_class_id = class_id
+                        break
+                
+                if divot_class_id is not None:
+                    # Filter to get only 'divot' class detections
+                    divot_mask = detections.class_id == divot_class_id
+                    divot_detections = detections[divot_mask]
                     
-                    if divot_contour is not None:
-                        # Calculate volume and depth
-                        measurements = calculate_volume_and_depth(divot_contour, mask_clean, depth_image, fx, fy)
-                        
-                        if measurements and 'error' not in measurements:
-                            # --- VISUALIZATION ---
-                            # Draw the divot contour
-                            cv2.drawContours(display_image, [divot_contour], -1, (255, 0, 0), 2)  # Blue
-                            
-                            # Draw the ground ring for visual feedback
-                            display_image[measurements['ground_ring_mask'] == 255] = [0, 255, 0]  # Green
-                            
-                            # Draw a red dot at the centroid for the point depth measurement
-                            cx, cy = measurements['centroid']
-                            if cx > 0 and cy > 0:
-                                cv2.circle(display_image, (cx, cy), 5, (0, 0, 255), -1)
-                            
-                            # Display the results
-                            cv2.putText(display_image, f"Ground: {measurements['ground_level_mm']:.1f} mm", 
-                                       (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
-                            cv2.putText(display_image, f"Area: {measurements['total_area_cm2']:.1f} cm^2 (calibrated)", 
-                                       (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
-                            cv2.putText(display_image, f"Volume: {measurements['total_volume_cm3']:.2f} cm^3 (calibrated)", 
-                                       (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
-                            if measurements['divot_point_depth_mm'] > 0:
-                                cv2.putText(display_image, f"Point Depth: {measurements['divot_point_depth_mm']:.1f} mm", 
-                                           (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
-                        else:
-                            # Display error message
-                            error_msg = measurements.get('error', 'Unknown error') if measurements else 'No measurements'
-                            cv2.putText(display_image, error_msg, (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+                    if len(divot_detections) > 0:
+                        # Process each divot detection individually
+                        for detection_idx in range(len(divot_detections)):
+                            if divot_detections.mask is not None and len(divot_detections.mask) > detection_idx:
+                                # Convert YOLO mask to contour
+                                divot_contour, mask_clean = convert_yolo_mask_to_contour(divot_detections.mask[detection_idx])
+                                
+                                if divot_contour is not None:
+                                    # Calculate volume and depth
+                                    measurements = calculate_volume_and_depth(divot_contour, mask_clean, depth_image, fx, fy)
+                                    
+                                    if measurements and 'error' not in measurements:
+                                        # --- VISUALIZATION FOR VOLUME CALCULATION ---
+                                        # Draw the divot contour
+                                        cv2.drawContours(display_image, [divot_contour], -1, (255, 0, 0), 2)  # Blue
+                                        
+                                        # Draw the ground ring for visual feedback
+                                        display_image[measurements['ground_ring_mask'] == 255] = [0, 255, 0]  # Green
+                                        
+                                        # Draw a red dot at the centroid for the point depth measurement
+                                        cx, cy = measurements['centroid']
+                                        if cx > 0 and cy > 0:
+                                            cv2.circle(display_image, (cx, cy), 5, (0, 0, 255), -1)
+                                            
+                                            # Get bounding box for text positioning
+                                            bbox = divot_detections.xyxy[detection_idx]
+                                            x1, y1, x2, y2 = map(int, bbox)
+                                            
+                                            # Position text just below the class label (which appears at top-left of bbox)
+                                            text_x = x1
+                                            text_y = y1 + 45  # Start below the class label
+                                            
+                                            # Display the results next to this specific divot
+                                            cv2.putText(display_image, f"A: {measurements['total_area_cm2']:.1f}cm^2", 
+                                                       (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 255), 1)
+                                            cv2.putText(display_image, f"V: {measurements['total_volume_cm3']:.2f}cm^3", 
+                                                       (text_x, text_y + 15), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 255), 1)
+                                            if measurements['divot_point_depth_mm'] > 0:
+                                                cv2.putText(display_image, f"D: {measurements['divot_point_depth_mm']:.1f}mm", 
+                                                           (text_x, text_y + 30), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255), 1)
+                                    else:
+                                        # Display error message next to the divot
+                                        bbox = divot_detections.xyxy[detection_idx]
+                                        x1, y1, x2, y2 = map(int, bbox)
+                                        text_x = x1
+                                        text_y = y1 + 45
+                                        
+                                        error_msg = measurements.get('error', 'Unknown error') if measurements else 'No measurements'
+                                        cv2.putText(display_image, error_msg, (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 255), 1)
             
             # Add YOLO annotations (optional, can be commented out for cleaner view)
-            # display_image = mask_annotator.annotate(scene=display_image, detections=detections)
-            # display_image = box_annotator.annotate(scene=display_image, detections=detections)
-            # display_image = label_annotator.annotate(scene=display_image, detections=detections)
+            display_image = mask_annotator.annotate(scene=display_image, detections=detections)
+            display_image = box_annotator.annotate(scene=display_image, detections=detections)
+            display_image = label_annotator.annotate(scene=display_image, detections=detections)
             
             # Show the annotated stream
             cv2.imshow('YOLO Divot Detection with Volume Analysis', display_image)
