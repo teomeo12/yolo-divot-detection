@@ -3,6 +3,7 @@ import cv2
 import supervision as sv
 import os
 from ultralytics import YOLO
+import torch
 
 def process_video(video_path, model_path, output_path, resize_factor=0.5, process_every_n_frames=2):
     # Initialize YOLO model
@@ -105,6 +106,16 @@ def process_video(video_path, model_path, output_path, resize_factor=0.5, proces
         print(f"Processed video saved to: {output_path}")
 
 def main():
+    # Check for CUDA availability
+    print(f"PyTorch version: {torch.__version__}")
+    print(f"CUDA available: {torch.cuda.is_available()}")
+    if torch.cuda.is_available():
+        print(f"CUDA version: {torch.version.cuda}")
+        print(f"Current device: {torch.cuda.current_device()}")
+        print(f"Device name: {torch.cuda.get_device_name(torch.cuda.current_device())}")
+    else:
+        print("CUDA not available. Running on CPU.")
+
     # Base workspace directory
     workspace_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     
