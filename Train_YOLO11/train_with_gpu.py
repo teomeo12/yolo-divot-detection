@@ -26,9 +26,15 @@ def download_dataset():
     
     
     print("📥 Downloading dataset from Roboflow...")
+    # rf = Roboflow(api_key="SqI8eWr5qmxgVkvnKMZO")
+    # project = rf.workspace("divotdetection").project("divots-instance-category")
+    # version = project.version(2)
+    # dataset = version.download("yolov11")
+    
+    # Updated to work with: https://app.roboflow.com/edge-53ixt/divot_only-qixps-sf4ea/1
     rf = Roboflow(api_key="SqI8eWr5qmxgVkvnKMZO")
-    project = rf.workspace("divotdetection").project("divots-instance-category")
-    version = project.version(2)
+    project = rf.workspace("edge-53ixt").project("divot_only-qixps-sf4ea")
+    version = project.version(1)
     dataset = version.download("yolov11")
     
     print(f"✓ Dataset downloaded to: {dataset.location}")
@@ -85,9 +91,8 @@ def save_model(model, output_dir="trained_models"):
     """Save the trained model"""
     os.makedirs(output_dir, exist_ok=True)
     
-    # Save in different formats
+    # Save model
     model_path = os.path.join(output_dir, "divot_detection_best.pt")
-    onnx_path = os.path.join(output_dir, "divot_detection_best.onnx")
     
     # Copy best weights
     best_weights = "runs/train/divot_detection/weights/best.pt"
@@ -95,13 +100,6 @@ def save_model(model, output_dir="trained_models"):
         import shutil
         shutil.copy2(best_weights, model_path)
         print(f"✓ Model saved to: {model_path}")
-        
-        # Export to ONNX for deployment
-        try:
-            model.export(format="onnx", imgsz=640)
-            print(f"✓ ONNX model exported")
-        except Exception as e:
-            print(f"⚠ ONNX export failed: {e}")
     
     return model_path
 
