@@ -1,33 +1,38 @@
-# YOLO Divot Detection
+# YOLO Divot Detection Project
 
-This project uses YOLOv11 for detecting and segmenting golf divots in videos. It includes multiple trained models with different configurations for comparison.
+This project uses a YOLO model to detect divots in videos.
 
-## Project Structure
+## Setup
 
-- `yolo11n_1600_40ep/`: YOLOv11-nano model trained on 1600 images for 40 epochs
-- `yolo11n_1600_100ep/`: YOLOv11-nano model trained on 1600 images for 100 epochs
-- `yolo11n_373_noaug_50ep/`: YOLOv11-nano model trained on 373 images without augmentation for 50 epochs
-- `yolo11s_1600_100ep/`: YOLOv11-small model trained on 1600 images for 100 epochs
+1.  **Clone the Repository:**
+    ```bash
+    git clone https://github.com/teomeo12/yolo-divot-detection.git
+    cd yolo-divot-detection
+    ```
 
-## Requirements
+2.  **Install Dependencies:**
+    Make sure you have Python and the required libraries installed.
+    ```bash
+    pip install -r requirements.txt
+    ```
+    *(Note: A `requirements.txt` file should be created to list dependencies like PyTorch, OpenCV, etc.)*
 
-- Python 3.8+
-- OpenCV
-- Ultralytics YOLO
-- Supervision
+3.  **Add Model Files:**
+    This project requires pre-trained model files (`.pt`) that are not tracked by Git. You will need to manually add them to the correct project folders.
+
+    For example, place your model file in the corresponding directory:
+    ```
+    /yolo11s_1600_100ep/your_model.pt
+    ```
+
+4.  **Run the Script:**
+    To process videos, run the `divot_from_video.py` script:
+    ```bash
+    python yolo11s_1600_100ep/divot_from_video.py
+    ```
 
 ## Usage
 
-1. Place your input videos in the `videos/` directory
-2. Run the video processing script:
-   ```bash
-   python yolo11n_1600_40ep/divot_from_video.py
-   ```
-3. Processed videos will be saved in `processed_videos/` subdirectories within each model's folder
-
-## Model Details
-
-Each model folder contains:
-- `.pt` file: The trained YOLO model
-- `divot_from_video.py`: Script for processing videos
-- `divot_detection.py`: Script for real-time detection 
+-   Place the videos you want to process in the `/videos` directory.
+-   Update the `project_models` dictionary in `divot_from_video.py` to select which models to use.
+-   Processed videos will be saved in the `processed_videos` subfolder within each model's project directory. 
