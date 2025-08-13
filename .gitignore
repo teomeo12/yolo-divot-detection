@@ -38,3 +38,8 @@ wheels/
 # OS
 .DS_Store
 Thumbs.db 
+
+# PyTorch / Models
+*.pt
+*.pth
+*.bin 

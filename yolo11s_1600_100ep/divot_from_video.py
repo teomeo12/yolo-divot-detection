@@ -122,7 +122,9 @@ def main():
     # Dictionary mapping project folders to their model files
     project_models = {
         
-        'yolo11s_1600_100ep': '1600s_aug_100ep.pt',
+        # 'yolo11s_1600_100ep': '1600s_aug_100ep.pt',
+        'yolo11s_1600_100ep': '3318s_aug_150ep.pt',
+        # 'new_model_test': 'new_model.pt' # Example for a new model
         
         # 'yolo11s_1600_100ep': 'model_name.pt'  # Uncomment and add correct model name when available
     }

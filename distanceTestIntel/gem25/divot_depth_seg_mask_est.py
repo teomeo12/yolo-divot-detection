@@ -8,7 +8,7 @@ import numpy as np
 
 # --- Tweakable Parameters ---
 # Calibration factor for 1D distance, based on your previous tests.
-CALIBRATION_FACTOR = 0.67
+CALIBRATION_FACTOR = 0.62
 # The area calibration factor is the square of the linear one.
 AREA_CALIBRATION_FACTOR = CALIBRATION_FACTOR ** 2
 
@@ -25,7 +25,7 @@ UPPER_BROWN_COLOR = np.array([25, 255, 200])
 MORPH_KERNEL = np.ones((5, 5), np.uint8)
 
 # How many pixels to expand the mask to find the surrounding "ground"
-GROUND_RING_WIDTH = 15
+GROUND_RING_WIDTH = 5
 # --- End of Parameters ---
 
 
@@ -81,6 +81,8 @@ try:
         if contours:
             # Assume the largest contour is our divot
             divot_contour = max(contours, key=cv2.contourArea)
+            # Get the bounding rectangle for the divot to calculate its dimensions
+            x, y, w, h = cv2.boundingRect(divot_contour)
 
             # --- 4. AUTOMATIC GROUND PLANE DETECTION ---
             # Create a mask for just the divot
@@ -107,6 +109,8 @@ try:
                 total_volume_cm3 = 0.0
                 total_area_cm2 = 0.0
                 divot_point_depth_mm = 0
+                divot_width_cm = 0.0
+                divot_height_cm = 0.0
 
                 # --- New: Get a single point depth reference from inside the divot ---
                 # Calculate the centroid of the contour to get a sample point
@@ -140,8 +144,28 @@ try:
                     pixel_area_cm2 = pixel_area_m2 * 10000
 
                     # Apply calibration factor to the raw calculations
+                    # Volume is calculated using the precise contour method
                     total_volume_cm3 = (np.sum(hole_depths_mm / 10) * pixel_area_cm2) * AREA_CALIBRATION_FACTOR
-                    total_area_cm2 = (hole_depths_mm.size * pixel_area_cm2) * AREA_CALIBRATION_FACTOR
+                    # Area is now calculated from WxH dimensions for consistency, so this line is removed.
+                    # total_area_cm2 = (hole_depths_mm.size * pixel_area_cm2) * AREA_CALIBRATION_FACTOR
+
+                # --- New: Calculate real-world dimensions of the divot's bounding box ---
+                if ground_level_mm > 0:
+                    # Use the reference ground plane depth to calculate real-world size
+                    ground_level_m = ground_level_mm / 1000.0
+                    # Size of a pixel in meters at the ground distance
+                    pixel_size_x_m = ground_level_m / fx
+                    pixel_size_y_m = ground_level_m / fy
+                    # Convert pixel dimensions of bounding box to cm
+                    divot_width_cm = (w * pixel_size_x_m) * 100.0
+                    divot_height_cm = (h * pixel_size_y_m) * 100.0
+
+                    # Apply the linear calibration factor to the dimensions
+                    divot_width_cm *= CALIBRATION_FACTOR
+                    divot_height_cm *= CALIBRATION_FACTOR
+
+                    # --- New: Calculate Area from Dimensions for consistency ---
+                    total_area_cm2 = divot_width_cm * divot_height_cm
 
                 # --- 6. VISUALIZATION ---
                 # Draw the divot contour
@@ -154,10 +178,17 @@ try:
 
                 # Display the results
                 cv2.putText(display_image, f"Ground: {ground_level_mm:.1f} mm", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
-                cv2.putText(display_image, f"Area: {total_area_cm2:.1f} cm^2 (calibrated)", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
-                cv2.putText(display_image, f"Volume: {total_volume_cm3:.2f} cm^3 (calibrated)", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
+
+                # Add the divot dimensions and calculated values to the HUD in a specific order
+                if divot_width_cm > 0:
+                    cv2.putText(display_image, f"Divot W: {divot_width_cm:.1f} cm", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
+                    cv2.putText(display_image, f"Divot H: {divot_height_cm:.1f} cm", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
+                    cv2.putText(display_image, f"Area: {total_area_cm2:.1f} cm^2", (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
+                    cv2.putText(display_image, f"Volume: {total_volume_cm3:.2f} cm^3", (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
+
                 if divot_point_depth_mm > 0:
-                    cv2.putText(display_image, f"Point Depth: {divot_point_depth_mm:.1f} mm", (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+                    cv2.putText(display_image, f"Point Depth: {divot_point_depth_mm:.1f} mm", (10, 180), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+
 
         # Display the images
         cv2.imshow("RealSense Feed", display_image)
